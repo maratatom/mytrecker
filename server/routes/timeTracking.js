@@ -148,4 +148,23 @@ router.get('/personnel/:personnelId', async (req, res) => {
   }
 });
 
+// Обновить замечания у записи по ее ID
+router.patch('/:id/remarks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const updated = await TimeRecord.findByIdAndUpdate(
+      id,
+      { $set: { remarks: remarks || '' } },
+      { new: true }
+    ).populate('personnelId', 'name position photo');
+    if (!updated) {
+      return res.status(404).json({ message: 'Запись не найдена' });
+    }
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: 'Ошибка при обновлении замечаний', error: error.message });
+  }
+});
+
 module.exports = router;

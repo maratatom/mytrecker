@@ -59,7 +59,7 @@ const DailyReport: React.FC = () => {
     setError('');
 
     try {
-      const response = await axios.get(`http://localhost:5000/api/time-tracking/date/${selectedDate}`);
+      const response = await axios.get(`/api/time-tracking/date/${selectedDate}`);
       setRecords(response.data);
     } catch (error) {
       setError('Ошибка при загрузке записей');
@@ -155,8 +155,8 @@ const DailyReport: React.FC = () => {
       {/* Фильтры и действия */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={6} md={3}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ flex: '1 1 200px', minWidth: '150px' }}>
               <TextField
                 fullWidth
                 type="date"
@@ -165,36 +165,36 @@ const DailyReport: React.FC = () => {
                 onChange={(e) => setSelectedDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Refresh />}
-                onClick={fetchRecords}
-                disabled={loading}
-              >
-                Обновить
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<Download />}
-                onClick={handleExport}
-                disabled={records.length === 0}
-              >
-                Экспорт CSV
-              </Button>
-            </Grid>
-          </Grid>
+            </Box>
+        <Box sx={{ flex: '1 1 150px', minWidth: '120px' }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={fetchRecords}
+            disabled={loading}
+          >
+            Обновить
+          </Button>
+        </Box>
+        <Box sx={{ flex: '1 1 150px', minWidth: '120px' }}>
+          <Button
+            fullWidth
+            variant="contained"
+            startIcon={<Download />}
+            onClick={handleExport}
+            disabled={records.length === 0}
+          >
+            Экспорт CSV
+          </Button>
+        </Box>
+      </Box>
         </CardContent>
       </Card>
 
       {/* Статистика */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} sm={3}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box sx={{ flex: '1 1 150px', minWidth: '120px' }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary">
@@ -205,8 +205,8 @@ const DailyReport: React.FC = () => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={6} sm={3}>
+        </Box>
+        <Box sx={{ flex: '1 1 150px', minWidth: '120px' }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main">
@@ -217,8 +217,8 @@ const DailyReport: React.FC = () => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={6} sm={3}>
+        </Box>
+        <Box sx={{ flex: '1 1 150px', minWidth: '120px' }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="error.main">
@@ -229,8 +229,8 @@ const DailyReport: React.FC = () => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={6} sm={3}>
+        </Box>
+        <Box sx={{ flex: '1 1 150px', minWidth: '120px' }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main">
@@ -241,8 +241,8 @@ const DailyReport: React.FC = () => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       {/* Таблица записей */}
       <Card>
@@ -276,7 +276,7 @@ const DailyReport: React.FC = () => {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar
-                            src={record.personnelId.photo ? `http://localhost:5000/uploads/${record.personnelId.photo}` : undefined}
+                            src={record.personnelId.photo ? `/uploads/${record.personnelId.photo}` : undefined}
                             alt={record.personnelId.name}
                             sx={{ width: 32, height: 32 }}
                           />

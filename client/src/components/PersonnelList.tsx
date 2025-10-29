@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -31,18 +31,25 @@ const PersonnelList: React.FC = () => {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useMemo(() => query, [query]);
   const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(null);
   const [remarks, setRemarks] = useState('');
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editData, setEditData] = useState<{ name: string; position: string; description?: string }>({ name: '', position: '', description: '' });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchPersonnel();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
 
   const fetchPersonnel = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/personnel');
+      const response = await axios.get('/api/personnel', {
+        params: query.trim() ? { q: query.trim() } : undefined,
+      });
       setPersonnel(response.data);
     } catch (error) {
       setError('Ошибка при загрузке списка персонала');
@@ -85,6 +92,28 @@ const PersonnelList: React.FC = () => {
     setRemarks('');
   };
 
+  const openEditDialog = (person: Personnel) => {
+    setSelectedPersonnel(person);
+    setEditData({ name: person.name, position: person.position, description: person.description || '' });
+    setEditDialogOpen(true);
+  };
+
+  const closeEditDialog = () => {
+    setEditDialogOpen(false);
+    setSelectedPersonnel(null);
+  };
+
+  const saveEdit = async () => {
+    if (!selectedPersonnel) return;
+    try {
+      await axios.put(`/api/personnel/${selectedPersonnel._id}`, editData);
+      closeEditDialog();
+      fetchPersonnel();
+    } catch (e) {
+      setError('Ошибка при сохранении сотрудника');
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -105,9 +134,19 @@ const PersonnelList: React.FC = () => {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <Box sx={{ maxWidth: 400, mb: 2 }}>
+        <TextField
+          fullWidth
+          placeholder="Поиск по имени, должности, описанию"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          size="small"
+        />
+      </Box>
+
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {personnel.map((person) => (
-          <Grid item xs={12} sm={6} md={4} key={person._id}>
+          <Box key={person._id} sx={{ flex: '1 1 300px', minWidth: '280px', maxWidth: '400px' }}>
             <Card 
               sx={{ 
                 cursor: 'pointer',
@@ -122,7 +161,7 @@ const PersonnelList: React.FC = () => {
               <CardMedia
                 component="img"
                 height="200"
-                image={person.photo ? `http://localhost:5000/uploads/${person.photo}` : '/default-avatar.png'}
+                image={person.photo ? `/uploads/${person.photo}` : '/default-avatar.png'}
                 alt={person.name}
                 sx={{ objectFit: 'cover' }}
               />
@@ -139,10 +178,13 @@ const PersonnelList: React.FC = () => {
                   </Typography>
                 )}
               </CardContent>
+              <Box sx={{ display: 'flex', gap: 1, p: 2 }}>
+                <Button size="small" variant="outlined" onClick={(e) => { e.stopPropagation(); openEditDialog(person); }}>Редактировать</Button>
+              </Box>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
       {/* Floating Action Buttons */}
       <Box sx={{ position: 'fixed', bottom: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -204,6 +246,22 @@ const PersonnelList: React.FC = () => {
           >
             Убытие
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Personnel Dialog */}
+      <Dialog open={editDialogOpen} onClose={closeEditDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Редактирование сотрудника</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField label="Имя" fullWidth value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
+            <TextField label="Должность" fullWidth value={editData.position} onChange={(e) => setEditData({ ...editData, position: e.target.value })} />
+            <TextField label="Описание" fullWidth multiline rows={3} value={editData.description} onChange={(e) => setEditData({ ...editData, description: e.target.value })} />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeEditDialog}>Отмена</Button>
+          <Button onClick={saveEdit} variant="contained">Сохранить</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -60,7 +60,7 @@ const AddPersonnel: React.FC = () => {
         formDataToSend.append('photo', photo);
       }
 
-      await axios.post('http://localhost:5000/api/personnel', formDataToSend, {
+      await axios.post('/api/personnel', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -117,32 +117,34 @@ const AddPersonnel: React.FC = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="name"
-                  label="Имя сотрудника"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  autoComplete="name"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="position"
-                  label="Должность"
-                  name="position"
-                  value={formData.position}
-                  onChange={handleInputChange}
-                  autoComplete="position"
-                />
-              </Grid>
-              <Grid item xs={12}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
+                  <TextField
+                    required
+                    fullWidth
+                    id="name"
+                    label="Имя сотрудника"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    autoComplete="name"
+                  />
+                </Box>
+                <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
+                  <TextField
+                    required
+                    fullWidth
+                    id="position"
+                    label="Должность"
+                    name="position"
+                    value={formData.position}
+                    onChange={handleInputChange}
+                    autoComplete="position"
+                  />
+                </Box>
+              </Box>
+              <Box>
                 <TextField
                   fullWidth
                   id="description"
@@ -153,8 +155,8 @@ const AddPersonnel: React.FC = () => {
                   value={formData.description}
                   onChange={handleInputChange}
                 />
-              </Grid>
-              <Grid item xs={12}>
+              </Box>
+              <Box>
                 <Button
                   variant="outlined"
                   component="label"
@@ -173,8 +175,8 @@ const AddPersonnel: React.FC = () => {
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                   Рекомендуемый размер: 300x300 пикселей. Поддерживаемые форматы: JPG, PNG, GIF
                 </Typography>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
               <Button

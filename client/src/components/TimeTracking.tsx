@@ -53,7 +53,7 @@ const TimeTracking: React.FC = () => {
 
   const fetchPersonnel = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/personnel');
+      const response = await axios.get('/api/personnel');
       setPersonnel(response.data);
     } catch (error) {
       setError('Ошибка при загрузке списка персонала');
@@ -63,7 +63,7 @@ const TimeTracking: React.FC = () => {
 
   const fetchTodayRecords = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/time-tracking/today');
+      const response = await axios.get('/api/time-tracking/today');
       setTodayRecords(response.data);
     } catch (error) {
       console.error('Error fetching today records:', error);
@@ -81,7 +81,7 @@ const TimeTracking: React.FC = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post(`http://localhost:5000/api/time-tracking/${action}`, {
+      const response = await axios.post(`/api/time-tracking/${action}`, {
         personnelId: selectedPersonnelId,
         remarks: remarks.trim() || undefined,
       });
@@ -137,9 +137,9 @@ const TimeTracking: React.FC = () => {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
         {/* Форма для отметки времени */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: 1 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -195,10 +195,10 @@ const TimeTracking: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Список записей за сегодня */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: 1 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -215,7 +215,7 @@ const TimeTracking: React.FC = () => {
                     <Card key={record._id} sx={{ mb: 2, p: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar
-                          src={record.personnelId.photo ? `http://localhost:5000/uploads/${record.personnelId.photo}` : undefined}
+                          src={record.personnelId.photo ? `/uploads/${record.personnelId.photo}` : undefined}
                           alt={record.personnelId.name}
                         />
                         <Box sx={{ flexGrow: 1 }}>
@@ -246,6 +246,16 @@ const TimeTracking: React.FC = () => {
                           color={getStatusColor(record)}
                           size="small"
                         />
+                        <Button size="small" onClick={async () => {
+                          const newRemarks = prompt('Изменить замечания', record.remarks || '');
+                          if (newRemarks === null) return;
+                          try {
+                            await axios.patch(`/api/time-tracking/${record._id}/remarks`, { remarks: newRemarks });
+                            fetchTodayRecords();
+                          } catch (e) {
+                            setError('Ошибка при обновлении замечаний');
+                          }
+                        }}>Править</Button>
                       </Box>
                     </Card>
                   ))}
@@ -253,8 +263,8 @@ const TimeTracking: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 };
