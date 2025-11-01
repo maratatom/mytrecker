@@ -38,6 +38,8 @@ const PersonnelList: React.FC = () => {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editData, setEditData] = useState<{ name: string; position: string; description?: string }>({ name: '', position: '', description: '' });
+  const [editPhoto, setEditPhoto] = useState<File | null>(null);
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -96,18 +98,43 @@ const PersonnelList: React.FC = () => {
   const openEditDialog = (person: Personnel) => {
     setSelectedPersonnel(person);
     setEditData({ name: person.name, position: person.position, description: person.description || '' });
+    setEditPhoto(null);
+    setEditPhotoPreview(person.photo ? `/uploads/${person.photo}` : null);
     setEditDialogOpen(true);
   };
 
   const closeEditDialog = () => {
     setEditDialogOpen(false);
     setSelectedPersonnel(null);
+    setEditPhoto(null);
+    setEditPhotoPreview(null);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setEditPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const saveEdit = async () => {
     if (!selectedPersonnel) return;
     try {
-      await axios.put(`/api/personnel/${selectedPersonnel._id}`, editData);
+      const formData = new FormData();
+      formData.append('name', editData.name);
+      formData.append('position', editData.position);
+      formData.append('description', editData.description || '');
+      if (editPhoto) {
+        formData.append('photo', editPhoto);
+      }
+      await axios.put(`/api/personnel/${selectedPersonnel._id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       closeEditDialog();
       fetchPersonnel();
     } catch (e) {
@@ -278,6 +305,15 @@ const PersonnelList: React.FC = () => {
         <DialogTitle>Редактирование сотрудника</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            {editPhotoPreview && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <Avatar src={editPhotoPreview} sx={{ width: 120, height: 120 }} />
+              </Box>
+            )}
+            <Button variant="outlined" component="label" fullWidth>
+              {editPhoto ? `Выбрано: ${editPhoto.name}` : 'Изменить фотографию'}
+              <input type="file" accept="image/*" hidden onChange={handlePhotoChange} />
+            </Button>
             <TextField label="Имя" fullWidth value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
             <TextField label="Должность" fullWidth value={editData.position} onChange={(e) => setEditData({ ...editData, position: e.target.value })} />
             <TextField label="Описание" fullWidth multiline rows={3} value={editData.description} onChange={(e) => setEditData({ ...editData, description: e.target.value })} />
