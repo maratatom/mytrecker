@@ -15,7 +15,7 @@ import {
   TextField,
   Alert,
 } from '@mui/material';
-import { Add, Person, Schedule, Assessment } from '@mui/icons-material';
+import { Add, Person, Schedule, Assessment, ViewList } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -38,6 +38,7 @@ const PersonnelList: React.FC = () => {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editData, setEditData] = useState<{ name: string; position: string; description?: string }>({ name: '', position: '', description: '' });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -114,6 +115,19 @@ const PersonnelList: React.FC = () => {
     }
   };
 
+  const deletePersonnel = async (id: string) => {
+    if (!window.confirm('Удалить сотрудника? (мягкое удаление)')) return;
+    try {
+      setDeletingId(id);
+      await axios.delete(`/api/personnel/${id}`);
+      fetchPersonnel();
+    } catch (e) {
+      setError('Ошибка при удалении сотрудника');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -180,6 +194,9 @@ const PersonnelList: React.FC = () => {
               </CardContent>
               <Box sx={{ display: 'flex', gap: 1, p: 2 }}>
                 <Button size="small" variant="outlined" onClick={(e) => { e.stopPropagation(); openEditDialog(person); }}>Редактировать</Button>
+                <Button size="small" color="error" variant="outlined" onClick={(e) => { e.stopPropagation(); deletePersonnel(person._id); }} disabled={deletingId===person._id}>
+                  {deletingId===person._id? 'Удаление...' : 'Удалить'}
+                </Button>
               </Box>
             </Card>
           </Box>
@@ -208,6 +225,13 @@ const PersonnelList: React.FC = () => {
           onClick={() => navigate('/daily-report')}
         >
           <Assessment />
+        </Fab>
+        <Fab 
+          color="info" 
+          aria-label="compact view"
+          onClick={() => navigate('/compact')}
+        >
+          <ViewList />
         </Fab>
       </Box>
 

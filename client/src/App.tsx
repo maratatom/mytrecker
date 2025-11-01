@@ -7,6 +7,7 @@ import Login from './components/Login';
 import PersonnelList from './components/PersonnelList';
 import AddPersonnel from './components/AddPersonnel';
 import TimeTracking from './components/TimeTracking';
+import CompactBoard from './components/CompactBoard';
 import DailyReport from './components/DailyReport';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -46,6 +47,7 @@ const AppContent: React.FC = () => {
         <Route path="/add-personnel" element={<AddPersonnel />} />
         <Route path="/time-tracking" element={<TimeTracking />} />
         <Route path="/daily-report" element={<DailyReport />} />
+        <Route path="/compact" element={<CompactBoard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Box>

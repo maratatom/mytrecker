@@ -44,6 +44,10 @@ const TimeTracking: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [todayRecords, setTodayRecords] = useState<TimeRecord[]>([]);
+  const [editRecord, setEditRecord] = useState<TimeRecord | null>(null);
+  const [editArrival, setEditArrival] = useState('');
+  const [editDeparture, setEditDeparture] = useState('');
+  const [editRemarks, setEditRemarks] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -109,6 +113,46 @@ const TimeTracking: React.FC = () => {
     if (record.departureTime) return 'Ушел';
     if (record.arrivalTime) return 'На работе';
     return 'Не пришел';
+  };
+
+  const openEditRecord = (record: TimeRecord) => {
+    setEditRecord(record);
+    setEditArrival(record.arrivalTime ? moment(record.arrivalTime).format('YYYY-MM-DDTHH:mm') : '');
+    setEditDeparture(record.departureTime ? moment(record.departureTime).format('YYYY-MM-DDTHH:mm') : '');
+    setEditRemarks(record.remarks || '');
+  };
+
+  const saveEditRecord = async () => {
+    if (!editRecord) return;
+    try {
+      setLoading(true);
+      await axios.patch(`/api/time-tracking/${editRecord._id}`, {
+        arrivalTime: editArrival || null,
+        departureTime: editDeparture || null,
+        remarks: editRemarks || '',
+      }, { headers: { 'Content-Type': 'application/json' } });
+      setEditRecord(null);
+      setSuccess('Запись успешно обновлена');
+      fetchTodayRecords();
+    } catch (e: any) {
+      setError('Ошибка при сохранении записи: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteRecord = async (record: TimeRecord) => {
+    if (!window.confirm(`Удалить запись учета времени для ${record.personnelId.name}?`)) return;
+    try {
+      setLoading(true);
+      await axios.delete(`/api/time-tracking/${record._id}`);
+      setSuccess('Запись успешно удалена');
+      fetchTodayRecords();
+    } catch (e: any) {
+      setError('Ошибка при удалении записи: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -246,16 +290,8 @@ const TimeTracking: React.FC = () => {
                           color={getStatusColor(record)}
                           size="small"
                         />
-                        <Button size="small" onClick={async () => {
-                          const newRemarks = prompt('Изменить замечания', record.remarks || '');
-                          if (newRemarks === null) return;
-                          try {
-                            await axios.patch(`/api/time-tracking/${record._id}/remarks`, { remarks: newRemarks });
-                            fetchTodayRecords();
-                          } catch (e) {
-                            setError('Ошибка при обновлении замечаний');
-                          }
-                        }}>Править</Button>
+                        <Button size="small" onClick={() => openEditRecord(record)}>Редактировать</Button>
+                        <Button size="small" color="error" onClick={() => deleteRecord(record)}>Удалить</Button>
                       </Box>
                     </Card>
                   ))}
@@ -265,6 +301,47 @@ const TimeTracking: React.FC = () => {
           </Card>
         </Box>
       </Box>
+
+      {editRecord && (
+        <Box sx={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Card sx={{ p: 2, minWidth: 320 }}>
+            <Typography variant="h6" gutterBottom>Редактирование записи</Typography>
+            <TextField
+              label="Прибытие"
+              type="datetime-local"
+              value={editArrival}
+              onChange={(e) => setEditArrival(e.target.value)}
+              fullWidth
+              sx={{ mb: 2 }}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Убытие"
+              type="datetime-local"
+              value={editDeparture}
+              onChange={(e) => setEditDeparture(e.target.value)}
+              fullWidth
+              sx={{ mb: 2 }}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Замечания"
+              value={editRemarks}
+              onChange={(e) => setEditRemarks(e.target.value)}
+              fullWidth
+              multiline
+              rows={3}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <Button onClick={() => setEditRecord(null)} disabled={loading}>Отмена</Button>
+              <Button variant="contained" onClick={saveEditRecord} disabled={loading}>
+                {loading ? 'Сохранение...' : 'Сохранить'}
+              </Button>
+            </Box>
+          </Card>
+        </Box>
+      )}
     </Box>
   );
 };

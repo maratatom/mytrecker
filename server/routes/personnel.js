@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const Personnel = require('../models/Personnel');
+const fs = require('fs');
 
 const router = express.Router();
 
@@ -30,7 +31,17 @@ const upload = multer({
 // Получить всех сотрудников
 router.get('/', async (req, res) => {
   try {
-    const personnel = await Personnel.find({ isActive: true }).sort({ name: 1 });
+    const { q } = req.query;
+    const filter = { isActive: true };
+    if (q && typeof q === 'string' && q.trim() !== '') {
+      const rx = new RegExp(q.trim(), 'i');
+      filter.$or = [
+        { name: rx },
+        { position: rx },
+        { description: rx },
+      ];
+    }
+    const personnel = await Personnel.find(filter).sort({ name: 1 });
     res.json(personnel);
   } catch (error) {
     res.status(500).json({ message: 'Ошибка при получении списка персонала', error: error.message });
@@ -98,17 +109,28 @@ router.put('/:id', upload.single('photo'), async (req, res) => {
 // Удалить сотрудника (мягкое удаление)
 router.delete('/:id', async (req, res) => {
   try {
-    const personnel = await Personnel.findByIdAndUpdate(
-      req.params.id, 
-      { isActive: false }, 
-      { new: true }
-    );
-    
-    if (!personnel) {
-      return res.status(404).json({ message: 'Сотрудник не найден' });
+    const { hard } = req.query;
+    if (hard === 'true') {
+      const toDelete = await Personnel.findById(req.params.id);
+      if (!toDelete) return res.status(404).json({ message: 'Сотрудник не найден' });
+      // Удаляем фото с диска, если есть
+      if (toDelete.photo) {
+        const p = path.join(process.cwd(), 'server', 'uploads', toDelete.photo);
+        fs.promises.unlink(p).catch(() => {});
+      }
+      await Personnel.findByIdAndDelete(req.params.id);
+      return res.json({ message: 'Сотрудник удален окончательно' });
+    } else {
+      const personnel = await Personnel.findByIdAndUpdate(
+        req.params.id,
+        { isActive: false },
+        { new: true }
+      );
+      if (!personnel) {
+        return res.status(404).json({ message: 'Сотрудник не найден' });
+      }
+      return res.json({ message: 'Сотрудник помечен как удаленный' });
     }
-    
-    res.json({ message: 'Сотрудник удален' });
   } catch (error) {
     res.status(500).json({ message: 'Ошибка при удалении сотрудника', error: error.message });
   }

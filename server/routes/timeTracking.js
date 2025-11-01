@@ -167,4 +167,34 @@ router.patch('/:id/remarks', async (req, res) => {
   }
 });
 
+// Изменить времена прибытия/убытия и/или замечания
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { arrivalTime, departureTime, remarks } = req.body;
+    const update = {};
+    if (typeof arrivalTime !== 'undefined') update.arrivalTime = arrivalTime ? new Date(arrivalTime) : null;
+    if (typeof departureTime !== 'undefined') update.departureTime = departureTime ? new Date(departureTime) : null;
+    if (typeof remarks !== 'undefined') update.remarks = remarks;
+    const updated = await TimeRecord.findByIdAndUpdate(id, { $set: update }, { new: true })
+      .populate('personnelId', 'name position photo');
+    if (!updated) return res.status(404).json({ message: 'Запись не найдена' });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: 'Ошибка при обновлении записи', error: error.message });
+  }
+});
+
+// Удалить запись учета времени
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await TimeRecord.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: 'Запись не найдена' });
+    res.json({ message: 'Запись удалена' });
+  } catch (error) {
+    res.status(500).json({ message: 'Ошибка при удалении записи', error: error.message });
+  }
+});
+
 module.exports = router;
