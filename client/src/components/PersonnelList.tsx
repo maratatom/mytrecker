@@ -6,7 +6,6 @@ import {
   CardMedia,
   Typography,
   Button,
-  Grid,
   Fab,
   Dialog,
   DialogTitle,
@@ -14,6 +13,7 @@ import {
   DialogActions,
   TextField,
   Alert,
+  Avatar,
 } from '@mui/material';
 import { Add, Person, Schedule, Assessment, ViewList } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -72,7 +72,7 @@ const PersonnelList: React.FC = () => {
     if (!selectedPersonnel) return;
 
     try {
-      const response = await axios.post(`http://localhost:5000/api/time-tracking/${action}`, {
+      const response = await axios.post(`/api/time-tracking/${action}`, {
         personnelId: selectedPersonnel._id,
         remarks: remarks.trim() || undefined,
       });

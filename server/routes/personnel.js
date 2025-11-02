@@ -7,9 +7,15 @@ const fs = require('fs');
 const router = express.Router();
 
 // Настройка multer для загрузки файлов
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+// Создаем директорию uploads, если её нет
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -115,7 +121,7 @@ router.delete('/:id', async (req, res) => {
       if (!toDelete) return res.status(404).json({ message: 'Сотрудник не найден' });
       // Удаляем фото с диска, если есть
       if (toDelete.photo) {
-        const p = path.join(process.cwd(), 'server', 'uploads', toDelete.photo);
+        const p = path.join(__dirname, '..', 'uploads', toDelete.photo);
         fs.promises.unlink(p).catch(() => {});
       }
       await Personnel.findByIdAndDelete(req.params.id);
